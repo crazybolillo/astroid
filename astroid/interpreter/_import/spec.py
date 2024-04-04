@@ -24,6 +24,12 @@ from astroid.modutils import EXT_LIB_DIRS
 
 from . import util
 
+_spec_cache = {}
+
+
+def clear_spec_cache():
+    _spec_cache.clear()
+
 
 # The MetaPathFinder protocol comes from typeshed, which says:
 # Intentionally omits one deprecated and one optional method of `importlib.abc.MetaPathFinder`
@@ -423,6 +429,18 @@ def _find_spec_with_path(
     raise ImportError(f"No module named {'.'.join(module_parts)}")
 
 
+def spec_cache(func):
+    def wrapper(*args):
+        key = ".".join(args[0])
+        if key not in _spec_cache:
+            _spec_cache[key] = func(*args)
+
+        return _spec_cache[key]
+
+    return wrapper
+
+
+@spec_cache
 def find_spec(modpath: list[str], path: Sequence[str] | None = None) -> ModuleSpec:
     """Find a spec for the given module.
 
